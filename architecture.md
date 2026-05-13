@@ -7,6 +7,32 @@ date: "12/05/2026"
 
 ## 1. Visión general
 Organización del código. Arquitectura limpia y persistencia (JSON o SQLite).
+La aplicación sigue una **arquitectura en capas** (Layered Architecture) para separar la lógica de presentación de la persistencia de datos con tres niveles bien diferenciados. La comunicación entre capas es siempre descendente: la capa superior llama a la inferior; nunca al revés.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   CAPA DE PRESENTACIÓN                  │
+│                   cli/  (cli_agent)                     │
+│   main.py  ·  menu.py  ·  formatters.py                 │
+└───────────────────────┬─────────────────────────────────┘
+                        │  llama a
+┌───────────────────────▼─────────────────────────────────┐
+│                 CAPA DE LÓGICA DE NEGOCIO               │
+│                logic/  (logic_agent)                    │
+│ /models . services.py . validators.py . calculations.py |
+|                                                         |
+└───────────────────────┬─────────────────────────────────┘
+                        │  llama a
+┌───────────────────────▼─────────────────────────────────┐
+│                   CAPA DE DATOS                         │
+│                   db/  (db_agent)                       │
+│         connection.py  ·  contact_repo.py               │
+└───────────────────────┬─────────────────────────────────┘
+                        │
+                    ┌───▼───┐
+                    │ MySQL │
+                    └───────┘
+```
 
 ## 2. Estructura de directorios
 
@@ -68,7 +94,7 @@ class Vehicle:
     capacidad_bateria_total: float
     nivel_bateria_actual: int/floar
     autonomia_maxima_km: int
-    estado: enum
+    estado: enum('Disponible','En ruta', 'Cargando', 'Mantenimiento')
 ```
 ---
 ### 3.5 logic/models/delivery.py
@@ -99,6 +125,7 @@ class Route:
 ### 3.6 logic/services.py
 Orquesta los casos de uso.
 
+###
 **Métodos:**
 
 | Método                              | Caso de uso      |
@@ -122,7 +149,25 @@ Funciones de validación sin efectos secundarios. Devuelven `True` o lanzan `Val
 ### 3.8 logic/calculations.py
 Modulo responsable de los calculos del sistema, logica de bateria y consumo.
 
+| Función                             | Regla aplicada                                 |
+|-------------------------------------|------------------------------------------------|
+| `validar_id_vehiculo(id_vehiculo)`  | No vacío,  Identificador único (ej: "VAN-001") |
+| `validar_id_entrega(id_entrega)`    | Identificador único del paquete.               |
 
+---
+### 3.8 db/conecction.py
+Gestiona la conexión a MySQL. Carga la configuración desde variables de entorno: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD.
+
+---
+### 3.9 db/contact_repo.py
+Repositorio de acceso a datos. Todas las consultas usan parámetros (%s).
+
+**Métodos:**
+
+| Método                       | SQL generado                            |
+|------------------------------|-----------------------------------------|
+
+---
 ## 4. Dependencias externas 
 | Paquete                    | Versión  | Uso                            |
 |----------------------------|----------|--------------------------------|
